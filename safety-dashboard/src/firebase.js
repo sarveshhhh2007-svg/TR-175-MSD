@@ -1,7 +1,5 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
-import { getStorage } from 'firebase/storage';
-import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCT-2rFzIT5wYQJ5ZLMlynMcIhnaLxWqvU",
@@ -13,7 +11,5 @@ const firebaseConfig = {
   databaseURL: "https://ai-safety-dashboard-default-rtdb.firebaseio.com"
 };
 
-export const app      = initializeApp(firebaseConfig);
-export const rtdb     = getDatabase(app);    // Realtime Database — blackspots + user_reports
-export const storage  = getStorage(app);     // Firebase Storage — report images
-export const db       = getFirestore(app);   // Firestore — reserved / future use
+export const app  = initializeApp(firebaseConfig);
+export const rtdb = getDatabase(app); // Realtime Database — blackspots + user_reports

@@ -1,6 +1,6 @@
 /**
  * Resizes an image File/Blob to ≤ 1 MB JPEG using an off-screen canvas.
- * Returns a Blob ready for Firebase Storage upload.
+ * Returns a Blob ready for base64 encoding.
  */
 export async function resizeImage(file, maxDim = 1024, quality = 0.82) {
   return new Promise((resolve, reject) => {
@@ -30,7 +30,7 @@ export async function resizeImage(file, maxDim = 1024, quality = 0.82) {
       canvas.toBlob(
         (blob) => {
           if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
-          // If still > 1 MB, retry at lower quality
+          // Retry at lower quality if still > 1 MB
           if (blob.size > 1_000_000 && quality > 0.4) {
             resolve(resizeImage(file, Math.round(maxDim * 0.85), quality - 0.1));
           } else {
@@ -47,7 +47,21 @@ export async function resizeImage(file, maxDim = 1024, quality = 0.82) {
   });
 }
 
-/** Returns a preview data-URL for a File (before upload) */
+/**
+ * Converts a Blob/File to a base64 data-URL string.
+ * This is used as a free alternative to Firebase Storage —
+ * the data-URL is stored directly in RTDB and works as an <img src>.
+ */
+export function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = (e) => resolve(e.target.result); // "data:image/jpeg;base64,..."
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Returns a preview data-URL for a File (before resize) */
 export function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

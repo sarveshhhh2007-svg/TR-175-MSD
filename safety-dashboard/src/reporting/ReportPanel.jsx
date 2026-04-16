@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Upload, MapPin, Crosshair, CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
-import { ref as dbRef, push, set } from 'firebase/database';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { rtdb, storage } from '../firebase';
+import { ref as dbRef, set } from 'firebase/database';
+import { rtdb } from '../firebase';
 import { useReporting } from './ReportingContext';
-import { resizeImage, fileToDataUrl } from './imageUtils';
+import { resizeImage, blobToBase64, fileToDataUrl } from './imageUtils';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -130,21 +129,18 @@ export default function ReportPanel() {
     setErrMsg('');
 
     try {
-      // 1. Resize image client-side
+      // 1. Resize image client-side → guaranteed < 1 MB
       const blob = await resizeImage(imageFile);
 
-      // 2. Upload to Firebase Storage
-      const imageId  = genId();
-      const imgRef   = storageRef(storage, `report_images/${imageId}.jpg`);
-      await uploadBytes(imgRef, blob, { contentType: 'image/jpeg' });
-      const imageUrl = await getDownloadURL(imgRef);
+      // 2. Convert to base64 data-URL (free alternative to Firebase Storage)
+      const imageUrl = await blobToBase64(blob);
 
-      // 3. Write to RTDB /user_reports
+      // 3. Write everything to RTDB /user_reports
       const reportId  = genId();
       const reportRef = dbRef(rtdb, `user_reports/${reportId}`);
       await set(reportRef, {
         reportId,
-        imageUrl,
+        imageUrl,          // base64 data-URL stored directly in RTDB
         description: description.trim(),
         categories,
         lat:         pickedLocation.lat,
